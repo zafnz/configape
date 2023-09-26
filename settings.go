@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"unicode"
 
 	"gopkg.in/yaml.v3"
 )
@@ -24,6 +23,9 @@ const (
 	fieldTypeCustomMarshaler
 )
 
+// Each field in the struct is a setting (except ones that are skipped).
+// Yes, this is bad in that it contains the definition and value, but we aren't
+// reusing these multiple times.
 type cfgSetting struct {
 	idx          int    // The index of the setting in the cfg struct
 	name         string // The name of the setting
@@ -44,45 +46,6 @@ type cfgSetting struct {
 }
 
 type cfgSettings []cfgSetting
-
-func camelCaseToUnderscore(name string) string {
-	return camelCaseConvert(name, '_')
-}
-func camelCaseToDash(name string) string {
-	return camelCaseConvert(name, '-')
-}
-
-// Take a CamelCase name and convert it to a hyphen-name, if there is a double
-// uppercase, then don't split it. Eg DDoubleUppercase -> ddouble-uppercase
-// and testURL -> test-url
-func camelCaseConvert(input string, separator rune) string {
-	var camel strings.Builder
-	camel.Grow(len(input) + 5) // Preallocate some space
-	prevCharIsUpper := false
-
-	for i, char := range input {
-		if i == 0 && unicode.IsUpper(char) {
-			// If the first character is uppercase, add the lowercase version, but
-			// don't prefix it with a hyphen
-			camel.WriteRune(unicode.ToLower(char))
-			prevCharIsUpper = true
-		} else if i > 0 && unicode.IsUpper(char) {
-			if !prevCharIsUpper {
-				// If the character is uppercase and not the first character,
-				// add a hyphen followed by its lowercase equivalent.
-				camel.WriteRune(separator)
-			}
-			camel.WriteRune(unicode.ToLower(char))
-			prevCharIsUpper = true
-		} else {
-			// Otherwise, add the character as is and reset prevCharIsUpper.
-			camel.WriteRune(char)
-			prevCharIsUpper = false
-		}
-	}
-
-	return camel.String()
-}
 
 func (s cfgSettings) Find(name, what string) *cfgSetting {
 	return s.doFind(name, what, false)

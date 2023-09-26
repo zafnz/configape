@@ -168,29 +168,6 @@ func TestParseIntoSettings(t *testing.T) {
 	}
 }
 
-func TestCamelCaseConvert(t *testing.T) {
-	tests := []struct {
-		Input string
-		Match string
-	}{
-		{"foo", "foo"},
-		{"foo-bar", "foo-bar"},
-		{"FooBar", "foo-bar"},
-		{"fooBar", "foo-bar"},
-		{"FFooBar", "ffoo-bar"},
-		{"fooBarBaz", "foo-bar-baz"},
-		{"testURL", "test-url"},
-		{"endDD", "end-dd"},
-		{"MiddleDDMiddle", "middle-ddmiddle"},
-	}
-	for _, test := range tests {
-		result := camelCaseConvert(test.Input, '-')
-		if result != test.Match {
-			t.Errorf("camelCaseConfig(%s) was not %s, was %s", test.Input, test.Match, result)
-		}
-	}
-}
-
 func TestFindSetting(t *testing.T) {
 	// Create sample cfgSettings
 	cfgSettings := cfgSettings{

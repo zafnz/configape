@@ -1,3 +1,4 @@
+// A unified configuration/environment/cli parser for Go, with a focus on simplicity and ease of use.
 package configape
 
 import (
@@ -5,21 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
-	"strings"
 )
-
-// type exampleConfig struct {
-// 	Backend       string   `cfg:"backend" required:"true" default:"sqlite"`
-// 	Path          string   `cfg:"path" help:"Path to the database file."`
-// 	ListOfStrings []string `cfg:"list_of_strings" help:"List of strings."`
-// 	Flag          bool     `cfg:"flag" help:"A flag."`
-// 	Verbose       int      `cfg:"verbose" type:"counter"`
-// 	CfgFile       string   `cfg:"config" type:"configfile" help:"Path to the configuration file."`
-// 	Extra         []string `cfg:"*"`
-// 	Section       struct {
-// 		SectionString string `cfg:"section_string" help:"A string in a section."`
-// 	} `cfg:"section"`
-// }
 
 // Options on how Config Ape should work.
 type Options struct {
@@ -50,6 +37,7 @@ type Options struct {
 	osArgs          []string
 }
 
+// Internal state holder.
 type cfgApe struct {
 	options   Options
 	cfg       interface{}
@@ -163,95 +151,4 @@ func (c *cfgApe) Apply(cfg interface{}, options *Options) error {
 	// so we can set the values in the cfg struct
 	err = setValues(cfg, c.settings)
 	return err
-}
-
-// Split a comma separated name=value string into a map. The value can be quoted with single or double
-// quotes and the comma inside the quotes will not be used as a separator, and the quotes will be
-// stripped from the value.
-func stringListToMap(str string) map[string]string {
-	m := make(map[string]string)
-
-	for _, s := range splitPreservingQuotes(str) {
-		parts := strings.SplitN(s, "=", 2)
-		if len(parts) == 2 {
-			val := parts[1]
-			// Strip surrounding single or double quotes
-			if len(val) >= 2 && ((val[0] == '"' && val[len(val)-1] == '"') || (val[0] == '\'' && val[len(val)-1] == '\'')) {
-				val = val[1 : len(val)-1]
-			}
-			m[parts[0]] = val
-		} else {
-			m[parts[0]] = ""
-		}
-	}
-	return m
-}
-
-// Splits the string on commans, but preserves any quoted strings
-func splitPreservingQuotes(str string) []string {
-	var result []string
-	var current string
-	inQuotes := false
-
-	for _, c := range str {
-		if c == '"' || c == '\'' {
-			inQuotes = !inQuotes
-		} else if c == ',' && !inQuotes {
-			result = append(result, current)
-			current = ""
-		} else {
-			current += string(c)
-		}
-	}
-
-	if current != "" {
-		result = append(result, current)
-	}
-
-	return result
-}
-
-func setValues(cfg interface{}, settings cfgSettings) error {
-	// Loop through the settings and set the values in the cfg struct
-	typeOfCfg := reflect.TypeOf(cfg)
-	valueOfCfg := reflect.ValueOf(cfg)
-	if typeOfCfg.Kind() == reflect.Ptr {
-		valueOfCfg = valueOfCfg.Elem()
-	}
-	for _, setting := range settings {
-		// Find the field in the cfg struct
-		value := valueOfCfg.FieldByIndex([]int{setting.idx})
-		if !value.IsValid() {
-			return fmt.Errorf("invalid setting: %s", setting.name)
-		}
-		// debugf("Setting %s to %s\n", setting.name, setting.value)
-		// debugf("field type: %s\n", field.Type)
-		// debugf("field kind: %s\n", field.Type.Kind())
-		// debugf("field current value: %v\n", value)
-		// If the setting is a subsection, then we need to recurse
-		if setting.fieldType == fieldTypeSubsection {
-			err := setValues(value.Addr().Interface(), setting.subsection)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-		// If there is a reflectValue set (valueSet) then just use that.
-		if setting.valueSet {
-			//debugf("field %s is set to %v\n", setting.name, setting.reflectValue)
-			if setting.reflectType.Kind() == reflect.Ptr && setting.reflectValue.Kind() != reflect.Ptr {
-				// If the setting is a pointer, then we need to set the value to the pointer
-				vPtr := reflect.New(setting.reflectType.Elem())
-				vPtr.Elem().Set(setting.reflectValue)
-				//value.Set(setting.reflectValue.Addr())
-				value.Set(vPtr)
-			} else {
-				//debugf("setting %s type is %s, setting value type is %s, setting value is %+v\n", setting.name, setting.reflectType.Kind(), setting.reflectValue.Type().Kind(), setting.reflectValue)
-				value.Set(setting.reflectValue)
-			}
-		}
-
-	}
-
-	return nil
 }

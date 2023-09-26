@@ -1,5 +1,6 @@
 package configape
 
+// Internal tests for configape
 import (
 	"fmt"
 	"os"
@@ -18,47 +19,6 @@ func TestPassByValue(t *testing.T) {
 	}
 	if err.Error() != "cfg must be a pointer" {
 		t.Error("Expected different error")
-	}
-}
-
-func TestStringListToMap(t *testing.T) {
-	str := "foo=bar,bar=baz"
-	m := stringListToMap(str)
-	if m["foo"] != "bar" {
-		t.Error("foo was not bar")
-	}
-	if m["bar"] != "baz" {
-		t.Error("bar was not baz")
-	}
-	if len(m) != 2 {
-		t.Error("Map length was not 2")
-	}
-
-	str = "goo,blah=thing"
-	m = stringListToMap(str)
-	if m["goo"] != "" {
-		t.Error("goo was not empty")
-	}
-	if m["blah"] != "thing" {
-		t.Error("blah was not thing")
-	}
-	if len(m) != 2 {
-		t.Error("Map length was not 2")
-	}
-
-	str = "blah=thing,str=\"foo,bar\",other='goo,baz'"
-	m = stringListToMap(str)
-	if m["blah"] != "thing" {
-		t.Error("blah was not thing")
-	}
-	if m["str"] != "foo,bar" {
-		t.Error("str was not foo,bar")
-	}
-	if m["other"] != "goo,baz" {
-		t.Error("other was not goo,baz")
-	}
-	if len(m) != 3 {
-		t.Error("Map length was not 3")
 	}
 }
 

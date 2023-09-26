@@ -1,5 +1,8 @@
 package configape
 
+// Most of the stuff to do with reflection
+// There are some dragons in here, and some magic.
+
 import (
 	"encoding"
 	"fmt"
@@ -7,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-// Most of the stuff to do with reflection
 
 // Takes a reflect.Value and a string, and assigns the string to the value, using sensible
 // conversions (eg "true" to true, "1" to 1, etc)
@@ -172,4 +173,50 @@ func strToType(valType reflect.Type, str string) (reflect.Value, error) {
 	} else {
 		return value.Elem(), nil
 	}
+}
+
+// Set the values of the provided struct, based on the values in the settings
+func setValues(cfg interface{}, settings cfgSettings) error {
+	// Loop through the settings and set the values in the cfg struct
+	typeOfCfg := reflect.TypeOf(cfg)
+	valueOfCfg := reflect.ValueOf(cfg)
+	if typeOfCfg.Kind() == reflect.Ptr {
+		valueOfCfg = valueOfCfg.Elem()
+	}
+	for _, setting := range settings {
+		// Find the field in the cfg struct
+		value := valueOfCfg.FieldByIndex([]int{setting.idx})
+		if !value.IsValid() {
+			return fmt.Errorf("invalid setting: %s", setting.name)
+		}
+		// debugf("Setting %s to %s\n", setting.name, setting.value)
+		// debugf("field type: %s\n", field.Type)
+		// debugf("field kind: %s\n", field.Type.Kind())
+		// debugf("field current value: %v\n", value)
+		// If the setting is a subsection, then we need to recurse
+		if setting.fieldType == fieldTypeSubsection {
+			err := setValues(value.Addr().Interface(), setting.subsection)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		// If there is a reflectValue set (valueSet) then just use that.
+		if setting.valueSet {
+			//debugf("field %s is set to %v\n", setting.name, setting.reflectValue)
+			if setting.reflectType.Kind() == reflect.Ptr && setting.reflectValue.Kind() != reflect.Ptr {
+				// If the setting is a pointer, then we need to set the value to the pointer
+				vPtr := reflect.New(setting.reflectType.Elem())
+				vPtr.Elem().Set(setting.reflectValue)
+				//value.Set(setting.reflectValue.Addr())
+				value.Set(vPtr)
+			} else {
+				//debugf("setting %s type is %s, setting value type is %s, setting value is %+v\n", setting.name, setting.reflectType.Kind(), setting.reflectValue.Type().Kind(), setting.reflectValue)
+				value.Set(setting.reflectValue)
+			}
+		}
+
+	}
+
+	return nil
 }
