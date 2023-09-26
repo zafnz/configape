@@ -17,10 +17,34 @@ var config = struct {
     Files []string `cfgtype:"remaining" help:"Files to process"`
 }{}
 func main() {
-    // Checks for config.json, an environment variable named CFG_NAME, and a commandline argument named --name
+    // Checks for config.json, an environment variable named CFG_NAME, and a commandline argument .named --name
+    // If you run this as my-program --name=Bob
     configape.Apply(&config, configape.Options{ConfigFile: "config.json"})
-    debugf("Hello %s\n", config.Name)
+    // Output:
+    // Hello Bob
+    fmt.Printf("Hello %s\n", config.Name)
 }
+```
+If you add `--help`, you will automatically get the cli help:
+```
+example (v0.0.0)
+
+  --simple-string <SimpleString>
+    This is the help for simple string
+  --simple-int <SimpleInt> (default: 42)
+  --required-string <RequiredString>
+  --something <something>
+  --short, -s
+    This is the help for the short flag
+  --config <ConfigFile>
+    Load config from this file
+
+database
+
+  --database-host <Host>
+    Database host to connect to
+  --database-port <Port>
+    Database port to use with the database host
 ```
 
 ## Options

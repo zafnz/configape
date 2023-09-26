@@ -74,7 +74,6 @@ func (c *cfgApe) makeHelp() string {
 	if c.options.HelpFooter != "" {
 		result += fmt.Sprintf("\n%s\n", c.options.HelpFooter)
 	}
-
 	return result
 }
 
