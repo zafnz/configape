@@ -1,3 +1,6 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/zafnz/configape.svg)](https://pkg.go.dev/github.com/zafnz/configape)
+[![Go Report Card](https://goreportcard.com/badge/github.com/zafnz/configape)](https://goreportcard.com/report/github.com/zafnz/configape)
+
 # Config Ape
 
 A go library to make configuration and commandline arguments trivial and convenient and easy to use. You specify your application configuration using a standard golang struct, and struct tags (like json) to specify options for those fields.

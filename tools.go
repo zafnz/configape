@@ -34,7 +34,7 @@ func stringListToMap(str string) map[string]string {
 	return m
 }
 
-// Splits the string on commans, but preserves any quoted strings
+// Splits the string on commas, but preserves any quoted strings
 func splitPreservingQuotes(str string) []string {
 	var result []string
 	var current string
